@@ -13,7 +13,7 @@ Use Plugin: [tableExport.jquery.plugin](https://github.com/hhurz/tableExport.jqu
 ### enableExport
 
 * type: Boolean
-* description: set `true` to show export button.
+* description: set `true` to enable the plugin.
 * default: `false`
 
 ### showExport
