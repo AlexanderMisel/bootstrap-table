@@ -10,11 +10,20 @@ Use Plugin: [tableExport.jquery.plugin](https://github.com/hhurz/tableExport.jqu
 
 ## Options
 
-### showExport
+### enableExport
 
 * type: Boolean
 * description: set `true` to show export button.
 * default: `false`
+
+### showExport
+
+* type: Boolean
+* description: set `false` to hide export button. 
+* note: 
+  - only work when enableExport is `true`
+  - When set `false`, you have to use the function `exportFile` to export.
+* default: `true`
 
 ### exportDataType
 
@@ -36,3 +45,12 @@ Use Plugin: [tableExport.jquery.plugin](https://github.com/hhurz/tableExport.jqu
 
 ### Icons
 * export: 'glyphicon-export icon-share'
+
+## Methods
+
+### exportFile
+
+* parameters: params
+  - type: the export type
+  - options: see exportOptions
+* description: a function that you can use to export files, do not rely on a button to trigger it
