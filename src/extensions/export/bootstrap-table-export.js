@@ -22,7 +22,8 @@
     };
 
     $.extend($.fn.bootstrapTable.defaults, {
-        showExport: false,
+        enableExport: false,
+        showExport: true,
         exportDataType: 'basic', // basic, all, selected
         // 'json', 'xml', 'png', 'csv', 'txt', 'sql', 'doc', 'excel', 'powerpoint', 'pdf'
         exportTypes: ['json', 'xml', 'csv', 'txt', 'sql', 'excel'],
@@ -48,12 +49,103 @@
 
         _initToolbar.apply(this, Array.prototype.slice.apply(arguments));
 
-        if (this.options.showExport) {
+        if (this.options.enableExport) {
             var that = this,
                 $btnGroup = this.$toolbar.find('>.btn-group'),
                 $export = $btnGroup.find('div.export');
+            
+            var exportHelper = function (type, extraOptions) {
+                var doExport = function () {
 
-            if (!$export.length) {
+                    if (!!that.options.exportFooter) {
+                        var data = that.getData();
+                        var $footerRow = that.$tableFooter.find("tr").first();
+
+                        var footerData = { };
+                        var footerHtml = [];
+
+                        $.each($footerRow.children(), function (index, footerCell) {
+
+                            var footerCellHtml = $(footerCell).children(".th-inner").first().html();
+                            footerData[that.columns[index].field] = footerCellHtml == '&nbsp;' ? null : footerCellHtml;
+
+                            // grab footer cell text into cell index-based array
+                            footerHtml.push(footerCellHtml);
+                        });
+
+                        that.append(footerData);
+
+                        var $lastTableRow = that.$body.children().last();
+
+                        $.each($lastTableRow.children(), function (index, lastTableRowCell) {
+
+                            $(lastTableRowCell).html(footerHtml[index]);
+                        });
+                    }
+                    
+                    extraOptions = extraOptions || {}
+
+                    that.$el.tableExport($.extend({}, that.options.exportOptions, extraOptions, {
+                        type: type,
+                        escape: false
+                    }));
+
+                    if (!!that.options.exportFooter) {
+                        that.load(data);
+                    }
+                };
+
+                var stateField = that.header.stateField;
+
+                if (that.options.exportDataType === 'all' && that.options.pagination) {
+                    that.$el.one(that.options.sidePagination === 'server' ? 'post-body.bs.table' : 'page-change.bs.table', function () {
+                        if (stateField) {
+                            that.hideColumn(stateField);
+                        }
+                        doExport();
+                        that.togglePagination();
+                    });
+                    that.togglePagination();
+                } else if (that.options.exportDataType === 'selected') {
+                    var data = that.getData(),
+                        selectedData = that.getSelections();
+                    if (!selectedData.length) {
+                        return;
+                    }
+
+                    if (that.options.sidePagination === 'server') {
+                        var dataServer = {total: that.options.totalRows};
+                        dataServer[that.options.dataField] = data;
+                        data = dataServer;
+                        var selectedDataServer = {total: selectedData.length};
+                        selectedDataServer[that.options.dataField] = selectedData;
+                        selectedData = selectedDataServer;
+                    }
+
+                    that.load(selectedData);
+                    if (stateField) {
+                        that.hideColumn(stateField);
+                    }
+                    doExport();
+                    that.load(data);
+                } else {
+                    if (stateField) {
+                        that.hideColumn(stateField);
+                    }
+                    doExport();
+                }
+                if (stateField) {
+                    that.showColumn(stateField);
+                }
+            }
+            
+            // Extend functional export support
+            $.fn.bootstrapTable.methods.push('exportFile');
+            BootstrapTable.prototype.exportFile = function (params) {
+              exportHelper(params.type, params.options)
+            };
+
+            if (this.options.showExport && !$export.length) {
                 $export = $([
                     '<div class="export btn-group">',
                         '<button class="btn' +
@@ -91,87 +183,7 @@
                 });
 
                 $menu.find('li').click(function () {
-                    var type = $(this).data('type'),
-                        doExport = function () {
-
-                            if (!!that.options.exportFooter) {
-                                var data = that.getData();
-                                var $footerRow = that.$tableFooter.find("tr").first();
-
-                                var footerData = { };
-                                var footerHtml = [];
-
-                                $.each($footerRow.children(), function (index, footerCell) {
-
-                                    var footerCellHtml = $(footerCell).children(".th-inner").first().html();
-                                    footerData[that.columns[index].field] = footerCellHtml == '&nbsp;' ? null : footerCellHtml;
-
-                                    // grab footer cell text into cell index-based array
-                                    footerHtml.push(footerCellHtml);
-                                });
-
-                                that.append(footerData);
-
-                                var $lastTableRow = that.$body.children().last();
-
-                                $.each($lastTableRow.children(), function (index, lastTableRowCell) {
-
-                                    $(lastTableRowCell).html(footerHtml[index]);
-                                });
-                            }
-
-                            that.$el.tableExport($.extend({}, that.options.exportOptions, {
-                                type: type,
-                                escape: false
-                            }));
-
-                            if (!!that.options.exportFooter) {
-                                that.load(data);
-                            }
-                        };
-
-                    var stateField = that.header.stateField;
-
-                    if (that.options.exportDataType === 'all' && that.options.pagination) {
-                        that.$el.one(that.options.sidePagination === 'server' ? 'post-body.bs.table' : 'page-change.bs.table', function () {
-                            if (stateField) {
-                                that.hideColumn(stateField);
-                            }
-                            doExport();
-                            that.togglePagination();
-                        });
-                        that.togglePagination();
-                    } else if (that.options.exportDataType === 'selected') {
-                        var data = that.getData(),
-                            selectedData = that.getSelections();
-                        if (!selectedData.length) {
-                            return;
-                        }
-
-                        if (that.options.sidePagination === 'server') {
-                            var dataServer = {total: that.options.totalRows};
-                            dataServer[that.options.dataField] = data;
-                            data = dataServer;
-                            var selectedDataServer = {total: selectedData.length};
-                            selectedDataServer[that.options.dataField] = selectedData;
-                            selectedData = selectedDataServer;
-                        }
-
-                        that.load(selectedData);
-                        if (stateField) {
-                            that.hideColumn(stateField);
-                        }
-                        doExport();
-                        that.load(data);
-                    } else {
-                        if (stateField) {
-                            that.hideColumn(stateField);
-                        }
-                        doExport();
-                    }
-                    if (stateField) {
-                        that.showColumn(stateField);
-                    }
+                    exportHelper($(this).data('type'))
                 });
             }
         }
