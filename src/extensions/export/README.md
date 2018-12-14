@@ -50,7 +50,5 @@ Use Plugin: [tableExport.jquery.plugin](https://github.com/hhurz/tableExport.jqu
 
 ### exportFile
 
-* parameters: params
-  - type: the export type
-  - options: see exportOptions
+* parameters: options: see exportOptions
 * description: a function that you can use to export files, do not rely on a button to trigger it
