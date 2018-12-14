@@ -54,7 +54,7 @@
                 $btnGroup = this.$toolbar.find('>.btn-group'),
                 $export = $btnGroup.find('div.export');
             
-            var exportHelper = function (type, extraOptions) {
+            var exportHelper = function (extraOptions) {
                 var doExport = function () {
 
                     if (!!that.options.exportFooter) {
@@ -85,10 +85,7 @@
                     
                     extraOptions = extraOptions || {}
 
-                    that.$el.tableExport($.extend({}, that.options.exportOptions, extraOptions, {
-                        type: type,
-                        escape: false
-                    }));
+                    that.$el.tableExport($.extend({}, that.options.exportOptions, extraOptions));
 
                     if (!!that.options.exportFooter) {
                         that.load(data);
@@ -141,9 +138,7 @@
             
             // Extend functional export support
             $.fn.bootstrapTable.methods.push('exportFile');
-            BootstrapTable.prototype.exportFile = function (params) {
-              exportHelper(params.type, params.options)
-            };
+            BootstrapTable.prototype.exportFile = exportHelper;
 
             if (this.options.showExport && !$export.length) {
                 $export = $([
@@ -183,7 +178,7 @@
                 });
 
                 $menu.find('li').click(function () {
-                    exportHelper($(this).data('type'))
+                    exportHelper({ type: $(this).data('type') })
                 });
             }
         }
